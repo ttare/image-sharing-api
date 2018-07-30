@@ -5,7 +5,7 @@
     "compile": "babel server/ -d server.lib/ --presets es2015",
     "start": "npm run watch",
     "db:migrate": "sequelize db:migrate --migrations-path server.lib/migrations",
-    "build": "babel config server -s -D -d dist --presets es2015,stage-0",
+    "build": "babel server/ -D -d dist --presets es2015,stage-0",
     "test": "eslint server",
     "watch": "nodemon -w server --exec \"npm run compile && node server.lib\""
   },
