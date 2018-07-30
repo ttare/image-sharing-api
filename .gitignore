@@ -1,0 +1,11 @@
+node_modules/
+dist/
+server.lib/
+upload/
+logs/
+npm-debug.log
+.DS_Store
+.idea/
+*.sqlite
+
+README.md
