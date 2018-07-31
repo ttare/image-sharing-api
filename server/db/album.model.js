@@ -12,9 +12,15 @@ export default (sequelize, DataTypes) => {
     }
   }, {
     tableName: 'albums',
+    indexes: [
+      {
+        unique: true,
+        fields: ['name', 'userId']
+      }
+    ],
     classMethods: {
       associate: function (db) {
-        db.Album.belongsTo(db.User, {foreignKey: 'userId'});
+        db.Album.belongsTo(db.User, {foreignKey: 'userId', allowNull: false});
         db.Album.belongsToMany(db.Image, {through: db.AlbumImages});
       }
     }
