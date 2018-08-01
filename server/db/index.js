@@ -26,6 +26,8 @@ export const User = db.User;
 export const Album = db.Album;
 export const Image = db.Image;
 export const Tag = db.Tag;
+export const Comment = db.Comment;
+export const Like = db.Like;
 export const AlbumImages = db.AlbumImages;
 export const ImageTags = db.ImageTags;
 export default db;

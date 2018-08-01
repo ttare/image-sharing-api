@@ -31,6 +31,8 @@ export default (sequelize, DataTypes) => {
     classMethods: {
       associate: function (db) {
         db.User.hasMany(db.Album, {foreignKey: 'userId'});
+        db.User.hasMany(db.Like, {foreignKey: 'UserId'});
+        db.User.hasMany(db.Comment, {foreignKey: 'UserId'});
       }
     },
     instanceMethods: {

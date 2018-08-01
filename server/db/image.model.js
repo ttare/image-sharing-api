@@ -24,6 +24,8 @@ export default (sequelize, DataTypes) => {
       associate: function (db) {
         db.Image.belongsToMany(db.Album, {through: db.AlbumImages});
         db.Image.belongsToMany(db.Tag, {through: db.ImageTags, foreignKey: 'ImageId'});
+        db.Image.hasMany(db.Comment, { foreignKey: 'ImageId' });
+        db.Image.hasMany(db.Like, { foreignKey: 'ImageId' });
       }
     }
   });

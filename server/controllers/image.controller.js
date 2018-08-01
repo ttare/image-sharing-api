@@ -1,4 +1,5 @@
-import {User, Album, Image, Tag, ImageTags} from "../db";
+import {User, Album, Image, Tag, Like, Comment} from "../db";
+import Sequelize from 'sequelize';
 import APIError from "../helpers/APIError";
 
 function search(req, res, next) {
@@ -20,25 +21,39 @@ function search(req, res, next) {
 
   Image.findAll({
     where,
+    attributes: {
+      include: [
+        [Sequelize.fn("COUNT", Sequelize.col("likes.id")), "likes"],
+        [Sequelize.fn("COUNT", Sequelize.col("comments.id")), "comments"],
+      ]
+    },
+    group: ['Image.id'],
     include: [
       {
         model: Tag,
         attributes: ['name'],
-        through: { attributes: [] },
-    }, {
-      model: Album,
-      include: {
-        model: User,
-        attributes: ['id', 'firstName', 'lastName']
+        through: {attributes: []},
+      }, {
+        model: Album,
+        include: {
+          model: User,
+          attributes: ['id', 'firstName', 'lastName']
+        },
+        attributes: ['id', 'name'],
+        through: {attributes: []}
       },
-      attributes: ['id', 'name'],
-      through: { attributes: [] }
-    },
+      {
+        model: Like,
+        attributes: []
+      },
+      {
+        model: Comment,
+        attributes: []
+      },
     ]
   })
-    .then(images => {
-      return res.send(images);
-    }).catch(error => next(error));
+    .then(images => res.json(images))
+    .catch(error => next(error));
 }
 
 function create(req, res, next) {
@@ -79,7 +94,96 @@ function create(req, res, next) {
     .catch(err => next(err));
 }
 
+function details(req, res, next) {
+  Image.findById(req.params.id, {
+    include: [
+      {
+        model: Tag,
+        attributes: ['name'],
+        through: {attributes: []},
+      }, {
+        model: Album,
+        include: {
+          model: User,
+          attributes: ['id', 'firstName', 'lastName']
+        },
+        attributes: ['id', 'name'],
+        through: {attributes: []}
+      },
+      {
+        model: Like,
+        include: {
+          model: User,
+          attributes: ['id', 'firstName', 'lastName']
+        },
+      },
+      {
+        model: Comment,
+        include: {
+          model: User,
+          attributes: ['id', 'firstName', 'lastName']
+        },
+      },
+    ]
+  })
+    .then(image => {
+      if (!image) {
+        throw new APIError('Bad Request', 400);
+      }
+
+      return res.json(image)
+    })
+    .catch(error => next(error));
+}
+
+function like(req, res, next) {
+  const likeObj = {
+    ImageId: req.params.id,
+    UserId: req.user.id,
+  };
+  const likeBody = Object.assign({}, likeObj, {like: req.body.like});
+
+  Like.findOne({where: likeObj}).then(like => {
+    if (like) {
+      return like.updateAttributes(likeBody)
+        .then(like => res.json(like))
+        .catch(error => next(error));
+    }
+
+    return Image.findById(req.params.id).then(image => {
+      if (!image) {
+        throw new APIError('Bad request', 400);
+      }
+
+      return image.createLike(likeBody);
+    }).then(like => res.json(like))
+
+  }).catch(error => next(error));
+}
+
+function comment(req, res, next) {
+  const commentObj = {
+    ImageId: req.params.id,
+    UserId: req.user.id,
+  };
+  const commentBody = Object.assign({}, commentObj, {text: req.body.text});
+
+  Image.findById(req.params.id)
+    .then(image => {
+      if (!image) {
+        throw new APIError('Bad request', 400);
+      }
+
+      return image.createComment(commentBody);
+    })
+    .then(comment => res.json(comment))
+    .catch(error => next(error));
+}
+
 export default {
   search,
-  create
+  create,
+  details,
+  like,
+  comment,
 }

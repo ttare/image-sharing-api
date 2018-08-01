@@ -8,6 +8,9 @@ const router = express.Router();
 
 router.get('/search', validate(imageValidation.search), imageCtrl.search);
 router.post('/create', upload('image'), validate(imageValidation.create, {allowUnknown: true}), imageCtrl.create);
+router.get('/:id', imageCtrl.details);
+router.post('/:id/like', imageCtrl.like);
+router.post('/:id/comment', imageCtrl.comment);
 
 
 export default router;

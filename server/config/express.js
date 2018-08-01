@@ -61,7 +61,6 @@ app.use('/images', express.static('upload'));
 app.use('/api', isAuthenticated, isAuthorized, routes);
 
 app.use((err, req, res, next) => {
-  console.log("ssss", err)
   if (!(err instanceof APIError)) {
     const apiError = new APIError(err.message, err.status, err.isPublic);
     // if (apiError.status === 400) {
