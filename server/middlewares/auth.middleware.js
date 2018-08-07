@@ -1,10 +1,11 @@
 import passport from "passport";
 import APIError from "../helpers/APIError";
 
-const publicUrls = {
-  '/api/users/create': true,
-  '/api/auth/login': true
-};
+const publicUrls = [
+  '/api/users/create',
+  '/api/auth/login',
+  '/api/images/search',
+];
 
 const adminUrls = {
   '/api/users/list': true
@@ -19,7 +20,9 @@ function isUserAuthorized(url, user) {
 
 export function isAuthenticated (req, res, next) {
   const url = req.originalUrl;
-  if (publicUrls[url]) {
+
+  const isPublic = publicUrls.some(item => url.includes(item));
+  if (isPublic) {
     return next();
   }
   return passport.authenticate('jwt', {session: false})(req, res, next);

@@ -6,7 +6,7 @@ import imageValidation from '../validations/image.validation';
 
 const router = express.Router();
 
-router.get('/search', validate(imageValidation.search), imageCtrl.search);
+router.get('/search/:page/:limit', validate(imageValidation.search), imageCtrl.search);
 router.post('/create', upload('image'), validate(imageValidation.create, {allowUnknown: true}), imageCtrl.create);
 router.get('/:id', imageCtrl.details);
 router.post('/:id/like', imageCtrl.like);

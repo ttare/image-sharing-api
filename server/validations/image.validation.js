@@ -3,8 +3,12 @@ import Joi from 'joi';
 export default {
   // GET /api/images/search
   search: {
+    params: Joi.object().keys({
+      limit: Joi.number(),
+      page: Joi.number(),
+    }),
     query: Joi.object().keys({
-      query: Joi.string(),
+      query: Joi.string()
     })
   },
   // POST /api/images/create
