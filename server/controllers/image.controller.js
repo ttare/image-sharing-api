@@ -24,10 +24,7 @@ function search(req, res, next) {
     let pages = Math.ceil(data.count / limit);
     let offset = limit * (page - 1);
 
-    console.log("uradio", pages, offset)
-
     Image.findAll({
-      where,
       subQuery: false,
       offset,
       limit,
@@ -37,7 +34,7 @@ function search(req, res, next) {
           [Sequelize.fn("COUNT", Sequelize.col("comments.id")), "comments"],
         ]
       },
-      group: ['Image.id'],
+      group: ['Image.id', 'Tags.ImageTags.TagName'],
       include: [
         {
           model: Tag,
@@ -55,7 +52,7 @@ function search(req, res, next) {
         },
         {
           model: Like,
-          attributes: []
+          attributes: [],
         },
         {
           model: Comment,
@@ -203,70 +200,3 @@ export default {
   like,
   comment,
 }
-
-
-/*
-SELECT `Image`. *, `Tags`.`name`
-AS `Tags.name`, `Tags.ImageTags`.`ImageId`
-AS `Tags.ImageTags.ImageId`, `Tags.ImageTags`.`TagName`
-AS `Tags.ImageTags.TagName`, `Tags.ImageTags`.`createdAt`
-AS `Tags.ImageTags.createdAt`, `Tags.ImageTags`.`updatedAt`
-AS `Tags.ImageTags.updatedAt`, `Albums`.`id`
-AS `Albums.id`, `Albums`.`name`
-AS `Albums.name`, `Albums.AlbumImages`.`id`
-AS `Albums.AlbumImages.id`, `Albums.AlbumImages`.`createdAt`
-AS `Albums.AlbumImages.createdAt`, `Albums.AlbumImages`.`updatedAt`
-AS `Albums.AlbumImages.updatedAt`, `Albums.AlbumImages`.`AlbumId`
-AS `Albums.AlbumImages.AlbumId`, `Albums.AlbumImages`.`ImageId`
-AS `Albums.AlbumImages.ImageId`, `Albums.User`.`id`
-AS `Albums.User.id`, `Albums.User`.`firstName`
-AS `Albums.User.firstName`, `Albums.User`.`lastName`
-AS `Albums.User.lastName`
-FROM(SELECT `Image`.`id`, `Image`.`name`, `Image`.`filename`, `Image`.`size`, `Image`.`createdAt`, COUNT(`likes`.`id`)
-AS `likes`
-FROM `images`
-AS `Image`
-GROUP
-BY `Image`.`id`
-LIMIT
-0, 10
-)
-AS `Image`
-LEFT
-OUTER
-JOIN `image_tags`
-AS `Tags.ImageTags`
-ON `Image`.`id` = `Tags.ImageTags`.`ImageId`
-LEFT
-OUTER
-JOIN `tags`
-AS `Tags`
-ON `Tags`.`name` = `Tags.ImageTags`.`TagName`
-LEFT
-OUTER
-JOIN `album_images`
-AS `Albums.AlbumImages`
-ON `Image`.`id` = `Albums.AlbumImages`.`ImageId`
-LEFT
-OUTER
-JOIN `albums`
-AS `Albums`
-ON `Albums`.`id` = `Albums.AlbumImages`.`AlbumId`
-LEFT
-OUTER
-JOIN `users`
-AS `Albums.User`
-ON `Albums`.`userId` = `Albums.User`.`id`
-LEFT
-OUTER
-JOIN `likes`
-AS `Likes`
-ON `Image`.`id` = `Likes`.`ImageId`
-LEFT
-OUTER
-JOIN `comments`
-AS `Comments`
-ON `Image`.`id` = `Comments`.`ImageId`;
-
-
-*/
