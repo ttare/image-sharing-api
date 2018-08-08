@@ -28,9 +28,9 @@ function search(req, res, next) {
 
     Image.findAll({
       where,
+      subQuery: false,
       offset,
       limit,
-      subQuery: false,
       attributes: {
         include: [
           [Sequelize.fn("COUNT", Sequelize.col("likes.id")), "likes"],
@@ -43,7 +43,8 @@ function search(req, res, next) {
           model: Tag,
           attributes: ['name'],
           through: {attributes: []},
-        }, {
+        },
+        {
           model: Album,
           include: {
             model: User,
