@@ -25,17 +25,19 @@ function search(req, res, next) {
     let offset = limit * (page - 1);
 
     const include = [
-      [Sequelize.fn("COUNT", Sequelize.col("likes.id")), "likes"],
-      [Sequelize.fn("COUNT", Sequelize.col("comments.id")), "comments"],
+      [
+        Sequelize.literal(`(SELECT COUNT(*) FROM Likes WHERE Likes.ImageId = Image.id)`),
+        'likes'
+      ],
+      [
+        Sequelize.literal(`(SELECT COUNT(*) FROM Comments WHERE Comments.ImageId = Image.id)`),
+        'comments'
+      ],
     ];
     if (req.user) {
       include.push([
-        Sequelize.cast(
-          Sequelize.literal(
-            `(SELECT COUNT(*) FROM Likes WHERE Likes.UserId = '${req.user.id}')`
-          ), 'string'
-        )
-        , 'likedByLoggedUser'
+        Sequelize.literal(`(SELECT COUNT(*) FROM Likes WHERE Likes.UserId = '${req.user.id}')`),
+        'likedByLoggedUser'
       ]);
     }
 
@@ -43,7 +45,7 @@ function search(req, res, next) {
       subQuery: false,
       offset,
       limit,
-      attributes: { include },
+      attributes: {include},
       group: ['Image.id', 'Tags.ImageTags.TagName'],
       include: [
         {
