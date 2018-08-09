@@ -11,8 +11,8 @@ router.get('/facebook/callback', OAuthCallback('facebook'));
 function OAuthCallback(provider, callback) {
   return (req, res, next) => {
     passport.authenticate(provider, {
-      failureRedirect: '/#!/',
-      successRedirect: '/#!/'
+      failureRedirect: 'http://localhost:3000/fali',
+      successRedirect: 'http://localhost:3000/'
     })(req, res, next);
   }
 }

@@ -22,7 +22,7 @@ export default (sequelize, DataTypes) => {
     updatedAt: false,
     classMethods: {
       associate: function (db) {
-        db.Image.belongsToMany(db.Album, {through: db.AlbumImages});
+        db.Image.belongsTo(db.Album, {through: db.AlbumImages});
         db.Image.belongsToMany(db.Tag, {through: db.ImageTags, foreignKey: 'ImageId'});
         db.Image.hasMany(db.Comment, { foreignKey: 'ImageId' });
         db.Image.hasMany(db.Like, { foreignKey: 'ImageId' });

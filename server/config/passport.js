@@ -3,7 +3,7 @@ import {Strategy as FacebookStrategy} from 'passport-facebook';
 import {Strategy as JWTStrategy, ExtractJwt} from 'passport-jwt';
 import config from "./env";
 import APIError from "../helpers/APIError";
-import {User} from "../db";
+import {User, Album} from "../db";
 
 export default function (passport) {
 
@@ -28,10 +28,15 @@ export default function (passport) {
   }));
 
   passport.use(new FacebookStrategy(config.facebookAuth, (accessToken, refreshToken, profile, done) => {
+      console.log("prof", profile)
+      const profileImage = `https://graph.facebook.com/${profile.id}/picture?type=medium`;
+      const name = profile.displayName.split(' ');
       const data = {
-        name: profile.displayName,
+        firstName: name[0],
+        lastName: name[name.length - 1],
         email: profile.username || profile.emails[0].value,
-        facebookId: profile.id
+        facebookId: profile.id,
+        profileImage,
       };
       const query = {
         where: {
@@ -45,10 +50,22 @@ export default function (passport) {
       User.findOne(query)
         .then((user) => {
           if (user) {
+            let fbUpdate = {};
+
             if (!user.facebookId) {
-              user.updateAttributes({facebookId: data.facebookId}).then(() => done(null));
+              fbUpdate.facebookId = data.facebookId;
+              if (!user.profileImage) {
+                fbUpdate.profileImage = profileImage;
+              }
+
+              return user.updateAttributes(fbUpdate).then((data) => done(null, data));
             } else {
-              return done(null);
+              if (!user.profileImage || (user.profileImage.includes('graph.facebook') && user.profileImage !== profileImage)) {
+                fbUpdate.profileImage = profileImage;
+                return user.updateAttributes(fbUpdate).then((data) => done(null, data));
+              }
+
+              return done(null, user);
             }
           } else {
             user = User.build(data, {include: [Album]});
@@ -61,7 +78,7 @@ export default function (passport) {
                 let album = Album.build({
                   userId: user.id
                 });
-                album.save().then(() => done(null));
+                album.save().then(() => done(null, user));
               });
             });
           }
@@ -75,5 +92,13 @@ export default function (passport) {
   };
 
   passport.use(new JWTStrategy(opts, (user, done) => done(null, user)));
+
+  passport.serializeUser(function (user, done) {
+    done(null, user);
+  });
+
+  passport.deserializeUser(function (user, done) {
+    done(null, user);
+  });
 
 }

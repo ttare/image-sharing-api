@@ -1,4 +1,5 @@
-import {User, Album } from '../db';
+import Sequelize from 'sequelize';
+import {User, Image, Album, AlbumImages} from '../db';
 import APIError from '../helpers/APIError';
 
 function create(req, res, next) {
@@ -25,10 +26,26 @@ function list(req, res, next) {
     where: {
       userId: req.user.id,
     },
-    include: [{
-      model: User,
-      attributes: ['firstName', 'email']
-    }]
+    attributes: {
+      include: [
+        [Sequelize.fn('COUNT', Sequelize.col('Images.id')), 'totalImages']
+      ]
+    },
+    group: ['Album.id'],
+    include: [
+      {
+        model: User,
+        attributes: ['firstName', 'lastName', 'profileImage']
+      },
+      {
+        model: Image,
+        attributes: [],
+        through: {
+          model: AlbumImages,
+          attributes: []
+        }
+      }
+    ]
   })
     .then((albums) => res.send(albums))
     .catch((error) => next(error));

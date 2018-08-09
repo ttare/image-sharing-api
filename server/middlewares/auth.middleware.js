@@ -4,6 +4,7 @@ import APIError from "../helpers/APIError";
 const publicUrls = [
   '/api/users/create',
   '/api/auth/login',
+  '/api/auth/facebook',
   '/api/images/search',
 ];
 
@@ -22,14 +23,14 @@ export function isAuthenticated (req, res, next) {
   const url = req.originalUrl;
 
   const isPublic = publicUrls.some(item => url.includes(item));
-  if (isPublic) {
-    return next();
+  if (!isPublic || req.headers.authorization && isPublic) {
+    return passport.authenticate('jwt', {session: false})(req, res, next);
   }
-  return passport.authenticate('jwt', {session: false})(req, res, next);
+
+  return next();
 }
 
 export function isAuthorized(req, res, next) {
-  console.log("req", req.user);
   if (isUserAuthorized(req.originalUrl, req.user)) {
     return next();
   }

@@ -24,16 +24,26 @@ function search(req, res, next) {
     let pages = Math.ceil(data.count / limit);
     let offset = limit * (page - 1);
 
+    const include = [
+      [Sequelize.fn("COUNT", Sequelize.col("likes.id")), "likes"],
+      [Sequelize.fn("COUNT", Sequelize.col("comments.id")), "comments"],
+    ];
+    if (req.user) {
+      include.push([
+        Sequelize.cast(
+          Sequelize.literal(
+            `(SELECT COUNT(*) FROM Likes WHERE Likes.UserId = '${req.user.id}')`
+          ), 'string'
+        )
+        , 'likedByLoggedUser'
+      ]);
+    }
+
     Image.findAll({
       subQuery: false,
       offset,
       limit,
-      attributes: {
-        include: [
-          [Sequelize.fn("COUNT", Sequelize.col("likes.id")), "likes"],
-          [Sequelize.fn("COUNT", Sequelize.col("comments.id")), "comments"],
-        ]
-      },
+      attributes: { include },
       group: ['Image.id', 'Tags.ImageTags.TagName'],
       include: [
         {
@@ -43,12 +53,11 @@ function search(req, res, next) {
         },
         {
           model: Album,
+          attributes: ['id', 'name'],
           include: {
             model: User,
-            attributes: ['id', 'firstName', 'lastName']
+            attributes: ['id', 'firstName', 'lastName', 'profileImage']
           },
-          attributes: ['id', 'name'],
-          through: {attributes: []}
         },
         {
           model: Like,
@@ -61,7 +70,7 @@ function search(req, res, next) {
       ]
     })
       .then(images => {
-        return res.json({images, total: data.count, pages, page: req.query.page})
+        return res.json({images, totalImages: data.count, totalPages: pages, page: req.params.page})
       })
       .catch(error => next(error));
   }).catch(error => next(error));
@@ -82,13 +91,14 @@ function create(req, res, next) {
       let image = Image.build({
         name: req.body.name,
         filename: req.file.filename,
-        size: req.file.size
+        size: req.file.size,
+        AlbumId: req.body.albumId
       });
       return image.save();
     })
     .then(image => {
       imageRef = image;
-      return albumRef.addImage(image)
+      return albumRef.addImage(image);
     })
     .then(() => {
       let tagsArray = JSON.parse(req.body.tags);
@@ -118,7 +128,7 @@ function details(req, res, next) {
         model: Album,
         include: {
           model: User,
-          attributes: ['id', 'firstName', 'lastName']
+          attributes: ['id', 'firstName', 'lastName', 'profileImage']
         },
         attributes: ['id', 'name'],
         through: {attributes: []}
@@ -127,14 +137,14 @@ function details(req, res, next) {
         model: Like,
         include: {
           model: User,
-          attributes: ['id', 'firstName', 'lastName']
+          attributes: ['id', 'firstName', 'lastName', 'profileImage']
         },
       },
       {
         model: Comment,
         include: {
           model: User,
-          attributes: ['id', 'firstName', 'lastName']
+          attributes: ['id', 'firstName', 'lastName', 'profileImage']
         },
       },
     ]

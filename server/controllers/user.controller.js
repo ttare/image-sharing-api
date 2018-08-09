@@ -4,7 +4,7 @@ import APIError from '../helpers/APIError';
 function create(req, res, next) {
   let user = User.build(req.body);
   user.salt = user.makeSalt();
-  user.password = user.encryptPassword(user.password, (error, passwordHash) => {
+  user.encryptPassword(user.password, (error, passwordHash) => {
     if (error) {
       const err = new APIError(err);
       return next(err);
@@ -22,6 +22,34 @@ function create(req, res, next) {
       })
       .catch((error) => next(error));
   });
+}
+
+function update(req, res, next) {
+  if (req.user.id !== req.params.userId) {
+    const error = new APIError('Bad request', 400);
+    return next(error);
+  }
+
+  User.findById(req.params.userId)
+    .then((user) => {
+      if (!user) {
+        const error = new APIError('Bad request', 400);
+        return next(error);
+      }
+      let updateUser = {};
+      ['firstName', 'lastName'].forEach(property => {
+        if (req.body[property]) {
+          updateUser[property] = req.body[property];
+        }
+      });
+
+      if (req.file) {
+        updateUser.profileImage = `http://${req.headers.host}/images/${req.file.filename}`;
+      }
+
+      return user.updateAttributes(updateUser).then(data => res.json(data));
+    })
+    .catch((error) => next(error));
 }
 
 function list(req, res, next) {
@@ -42,8 +70,22 @@ function get(req, res, next) {
     .catch((error) => next(error));
 }
 
+function me(req, res, next) {
+  User.findById(req.user.id)
+    .then((user) => {
+      if (!user) {
+        const error = new APIError('Bad request', 400);
+        return next(error)
+      }
+      return res.send(user);
+    })
+    .catch((error) => next(error));
+}
+
 export default {
   get,
+  me,
   create,
+  update,
   list
 }
