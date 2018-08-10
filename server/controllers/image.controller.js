@@ -10,7 +10,7 @@ function search(req, res, next) {
       $or: [
         {
           name: {
-            $like: `%${query}%`
+            $like: query
           }
         },
         ['EXISTS( SELECT * FROM "image_tags" WHERE TagName LIKE ? AND "ImageId" = "Image".id )', query],
@@ -26,7 +26,7 @@ function search(req, res, next) {
 
     const include = [
       [
-        Sequelize.literal(`(SELECT COUNT(*) FROM Likes WHERE Likes.ImageId = Image.id)`),
+        Sequelize.literal(`(SELECT COUNT(*) FROM Likes WHERE Likes.like = 1 AND Likes.ImageId = Image.id)`),
         'likes'
       ],
       [
@@ -42,6 +42,7 @@ function search(req, res, next) {
     }
 
     Image.findAll({
+      where,
       subQuery: false,
       offset,
       limit,
