@@ -36,7 +36,7 @@ function search(req, res, next) {
     ];
     if (req.user) {
       include.push([
-        Sequelize.literal(`(SELECT COUNT(*) FROM Likes WHERE Likes.UserId = '${req.user.id}')`),
+        Sequelize.literal(`(SELECT COUNT(*) FROM Likes WHERE Likes.ImageId = Image.id AND Likes.UserId = '${req.user.id}' AND Likes.like = 1)`),
         'likedByLoggedUser'
       ]);
     }
