@@ -129,12 +129,11 @@ function details(req, res, next) {
         through: {attributes: []},
       }, {
         model: Album,
+        attributes: ['id', 'name'],
         include: {
           model: User,
           attributes: ['id', 'firstName', 'lastName', 'profileImage']
         },
-        attributes: ['id', 'name'],
-        through: {attributes: []}
       },
       {
         model: Like,
