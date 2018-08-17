@@ -14,7 +14,6 @@ function search(req, res, next) {
           }
         },
         ['EXISTS( SELECT * FROM "image_tags" WHERE TagName LIKE ? AND "ImageId" = "Image".id )', query],
-
       ]
     };
   }
@@ -26,7 +25,7 @@ function search(req, res, next) {
 
     const include = [
       [
-        Sequelize.literal(`(SELECT COUNT(*) FROM Likes WHERE Likes.like = 1 AND Likes.ImageId = Image.id)`),
+        Sequelize.literal(`(SELECT COUNT(*) FROM Likes WHERE Likes.value = 1 AND Likes.ImageId = Image.id)`),
         'likes'
       ],
       [
@@ -36,7 +35,7 @@ function search(req, res, next) {
     ];
     if (req.user) {
       include.push([
-        Sequelize.literal(`(SELECT COUNT(*) FROM Likes WHERE Likes.ImageId = Image.id AND Likes.UserId = '${req.user.id}' AND Likes.like = 1)`),
+        Sequelize.literal(`(SELECT COUNT(*) FROM Likes WHERE Likes.ImageId = Image.id AND Likes.UserId = '${req.user.id}' AND Likes.value = 1)`),
         'likedByLoggedUser'
       ]);
     }
@@ -122,6 +121,8 @@ function create(req, res, next) {
 
 function details(req, res, next) {
   Image.findById(req.params.id, {
+    subQuery: false,
+    group: ['Image.id'],
     include: [
       {
         model: Tag,
@@ -130,13 +131,6 @@ function details(req, res, next) {
       }, {
         model: Album,
         attributes: ['id', 'name'],
-        include: {
-          model: User,
-          attributes: ['id', 'firstName', 'lastName', 'profileImage']
-        },
-      },
-      {
-        model: Like,
         include: {
           model: User,
           attributes: ['id', 'firstName', 'lastName', 'profileImage']
@@ -156,7 +150,20 @@ function details(req, res, next) {
         throw new APIError('Bad Request', 400);
       }
 
-      return res.json(image)
+      return image.getLikes({
+        where: {
+          value: 1
+        },
+        include: {
+          model: User,
+          attributes: ['id', 'firstName', 'lastName', 'profileImage']
+        },
+      }).then(likes => {
+        let data = Object.assign({}, image.toJSON(), {Likes: likes || []});
+        return res.json(data);
+      }).catch(error => next(error));
+
+
     })
     .catch(error => next(error));
 }
@@ -166,7 +173,7 @@ function like(req, res, next) {
     ImageId: req.params.id,
     UserId: req.user.id,
   };
-  const likeBody = Object.assign({}, likeObj, {like: req.body.like});
+  const likeBody = Object.assign({}, likeObj, {value: req.body.like});
 
   Like.findOne({where: likeObj}).then(like => {
     if (like) {

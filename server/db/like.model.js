@@ -5,7 +5,7 @@ export default (sequelize, DataTypes) => {
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true
     },
-    like: {
+    value: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
