@@ -103,7 +103,7 @@ function create(req, res, next) {
       return albumRef.addImage(image);
     })
     .then(() => {
-      let tagsArray = JSON.parse(req.body.tags);
+      let tagsArray = req.body.tags
       const tags = tagsArray.map(item => ({
         name: item
       }));
